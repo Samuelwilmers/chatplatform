@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Plattform</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #f4f4f4; 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+        }
+        #chat-container { 
+            width: 350px; 
+            background: white; 
+            padding: 20px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            border-radius: 8px; 
+            position: relative; 
+        }
+        #chat { 
+            height: 300px; 
+            overflow-y: auto; 
+            border: 1px solid #ccc; 
+            margin-bottom: 8px; 
+            padding: 8px; 
+            background: #e9e9e9; 
+        }
+        .message { 
+            padding: 10px; 
+            margin: 5px 0; 
+            border-radius: 4px; 
+            width: fit-content; 
+            max-width: 80%; 
+        }
+        .message.you { 
+            background-color: #d1e7dd; 
+            align-self: flex-end; 
+        }
+        .message.partner { 
+            background-color: #f8d7da; 
+            align-self: flex-start; 
+        }
+        #message { 
+            width: calc(100% - 90px); 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            margin-right: 10px; 
+            float: left; 
+        }
+        button { 
+            padding: 10px 20px; 
+            background-color: #0056b3; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            float: left; 
+        }
+        button:hover { 
+            background-color: #003580; 
+        }
+        .clear { 
+            clear: both; 
+        }
+        .version { 
+            position: absolute; 
+            right: 10px; 
+            bottom: 10px; 
+            font-size: 0.8em; 
+            color: grey; 
+        }
+        .room-button { 
+            margin: 5px 0; 
+            width: 100%; 
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div>
+            <button class="room-button" onclick="joinRoom('Room1')">Room 1</button>
+            <button class="room-button" onclick="joinRoom('Room2')">Room 2</button>
+            <button class="room-button" onclick="joinRoom('Room3')">Room 3</button>
+        </div>
+        <div id="chat"></div>
+        <input type="text" id="message" placeholder="Nachricht schreiben">
+        <button onclick="sendMessage()">Senden</button>
+        <div class="clear"></div>
+        <div class="version">V1.0</div>
+    </div>
+
+    <script>
+        const socket = io();
+        let currentRoom = "";
+
+        function joinRoom(room) {
+            currentRoom = room;
+            socket.emit('join', { room: currentRoom });
+        }
+
+        socket.on('room_joined', function(data) {
+            const chat = document.getElementById('chat');
+            chat.innerHTML += `<div class="message system">Verbunden mit Raum: ${data.room}</div>`;
+        });
+
+        function sendMessage() {
+            const messageInput = document.getElementById('message');
+            const message = messageInput.value;
+            socket.emit('message', { room: currentRoom, msg: message });
+            messageInput.value = '';
+            const chat = document.getElementById('chat');
+            chat.innerHTML += `<div class="message you">Sie: ${message}</div>`;
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        socket.on('message', function(data) {
+            const chat = document.getElementById('chat');
+            chat.innerHTML += `<div class="message partner">Partner: ${data.msg}</div>`;
+            chat.scrollTop = chat.scrollHeight;
+        });
+    </script>
+</body>
+</html>
